@@ -5,9 +5,9 @@ using UnityEngine;
 public static class Noise
 {
     // offset is a Vector3 instead of a Vector2 in order to use the 'z' field to avoid mistakes
-    public static float[,] GenerateNoiseMap(int seed, Vector3 offset, int xSize, int zSize, float scale, float frequency, float amplitude, int octaves, float persistance, float lacunarity, float baseMultiplier, float exponent)
+    public static float[,] GenerateNoiseMap(int seed, Vector3 offset, int xSize, int zSize, float scale, float frequency, int octaves, float persistance, float lacunarity)
     {
-        float[,] noiseMap = new float[xSize + 1, zSize + 1];
+        float[,] noiseMap = new float[xSize, zSize];
 
         System.Random random = new System.Random(seed);
         Vector3[] octaveOffsets = new Vector3[octaves];
@@ -26,42 +26,26 @@ public static class Noise
         float halfXSize = xSize / 2f;
         float halfZSize = zSize / 2f;
 
-        for (int x = 0; x <= xSize; x++)
+        for (int x = 0; x < xSize; x++)
         {
-            for (int z = 0; z <= zSize; z++)
+            for (int z = 0; z < zSize; z++)
             {
                 float noiseHeight = 0;
-                float amplitudeTmp = amplitude;
+                float amplitude = 1f;
                 float frequencyTmp = frequency;
-
-                //float amplitudeSum = 0f;
 
                 for (int i = 0; i < octaves; i++)
                 {
                     float sampleX = (x - halfXSize) / scale * frequencyTmp + octaveOffsets[i].x;
                     float sampleZ = (z - halfZSize) / scale * frequencyTmp + octaveOffsets[i].z;
-                    float perlinValue = (Mathf.PerlinNoise(sampleX, sampleZ) * 2 - 1) * amplitudeTmp;
+                    float perlinValue = (Mathf.PerlinNoise(sampleX, sampleZ) * 2 - 1) * amplitude;
                     noiseHeight += perlinValue;
 
-                    //amplitudeSum += amplitudeTmp;
-
-                    amplitudeTmp *= persistance;
+                    amplitude *= persistance;
                     frequencyTmp *= lacunarity;
                 }
 
-                //noiseHeight /= amplitudeSum;
-
                 noiseMap[x, z] = noiseHeight;
-            }
-        }
-
-        noiseMap = NormalizeNoise(noiseMap);
-
-        for (int x = 0; x <= xSize; x++)
-        {
-            for (int z = 0; z <= zSize; z++)
-            {
-                noiseMap[x, z] = Mathf.Pow(noiseMap[x, z] * baseMultiplier, exponent);
             }
         }
 

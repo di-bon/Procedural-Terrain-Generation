@@ -4,13 +4,46 @@ using UnityEngine;
 
 public static class MeshGenerator
 {
-    public static MeshData GenerateTerrainMesh(float[,] noiseMap, float heightMultiplier, float yOffset)
+    public static MeshData GenerateTerrainMesh(float[,] noiseMap, float heightMultiplier, AnimationCurve heightCurve, int levelOfDetail, float yOffset)
     {
         int xSize = noiseMap.GetLength(0);
         int zSize = noiseMap.GetLength(1);
 
         //float topLeftX = (xSize - 1) / -2f;
         //float topLeftZ = (zSize - 1) / 2f;
+
+        int meshSimplificationIncrement = levelOfDetail == 0 ? 1 : levelOfDetail * 2;
+        int vertecesPerLine = (xSize - 1) / meshSimplificationIncrement + 1;
+
+        MeshData meshData = new MeshData(vertecesPerLine, vertecesPerLine);
+        int vertexIndex = 0;
+
+        for (int z = 0; z < zSize; z += meshSimplificationIncrement)
+        {
+            for (int x = 0; x < xSize; x += meshSimplificationIncrement)
+            {
+                //meshData.vertices[vertexIndex] = new Vector3(topLeftX + x, noiseMap[x, z], topLeftZ - z);
+                meshData.vertices[vertexIndex] = new Vector3(x, heightCurve.Evaluate(noiseMap[x, z]) * heightMultiplier + yOffset, z);
+
+                meshData.uvs[vertexIndex] = new Vector2(x / (float)xSize, z / (float)zSize);
+
+                if (x < xSize - 1 && z < zSize - 1)
+                {
+                    meshData.AddTriangle(vertexIndex + vertecesPerLine, vertexIndex + vertecesPerLine + 1, vertexIndex);
+                    meshData.AddTriangle(vertexIndex + 1, vertexIndex, vertexIndex + vertecesPerLine + 1);
+                }
+
+                vertexIndex++;
+            }
+        }
+
+        return meshData;
+    }
+
+    public static MeshData GenerateFlatMesh(float[,] noiseMap, float y)
+    {
+        int xSize = noiseMap.GetLength(0);
+        int zSize = noiseMap.GetLength(1);
 
         MeshData meshData = new MeshData(xSize, zSize);
         int vertexIndex = 0;
@@ -19,8 +52,7 @@ public static class MeshGenerator
         {
             for (int x = 0; x < xSize; x++)
             {
-                //meshData.vertices[vertexIndex] = new Vector3(topLeftX + x, noiseMap[x, z], topLeftZ - z);
-                meshData.vertices[vertexIndex] = new Vector3(x, noiseMap[x, z] * heightMultiplier + yOffset, z);
+                meshData.vertices[vertexIndex] = new Vector3(x, y, z);
 
                 meshData.uvs[vertexIndex] = new Vector2(x / (float)xSize, z / (float)zSize);
 
@@ -36,35 +68,6 @@ public static class MeshGenerator
 
         return meshData;
     }
-
-    //public static MeshData GenerateNoiseMesh(float[,] noiseMap, float y)
-    //{
-    //    int xSize = noiseMap.GetLength(0);
-    //    int zSize = noiseMap.GetLength(1);
-
-    //    MeshData meshData = new MeshData(xSize, zSize);
-    //    int vertexIndex = 0;
-
-    //    for (int z = 0; z < zSize; z++)
-    //    {
-    //        for (int x = 0; x < xSize; x++)
-    //        {
-    //            meshData.vertices[vertexIndex] = new Vector3(x, y, z);
-
-    //            meshData.uvs[vertexIndex] = new Vector2(x / (float)xSize, z / (float)zSize);
-
-    //            if (x < xSize - 1 && z < zSize - 1)
-    //            {
-    //                meshData.AddTriangle(vertexIndex + xSize, vertexIndex + xSize + 1, vertexIndex);
-    //                meshData.AddTriangle(vertexIndex + 1, vertexIndex, vertexIndex + xSize + 1);
-    //            }
-
-    //            vertexIndex++;
-    //        }
-    //    }
-
-    //    return meshData;
-    //}
 }
 
 public class MeshData

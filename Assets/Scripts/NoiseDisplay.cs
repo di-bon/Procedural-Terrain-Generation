@@ -30,7 +30,7 @@ public class NoiseDisplay : MonoBehaviour
         int xSize = noise.GetLength(0);
         int zSize = noise.GetLength(1);
 
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(noise, 0, yOffset + fineYOffset);
+        MeshData meshData = MeshGenerator.GenerateFlatMesh(noise, yOffset + fineYOffset);
 
         colors = new Color[meshData.vertices.Length];
         for (int z = 0; z < zSize; z++)

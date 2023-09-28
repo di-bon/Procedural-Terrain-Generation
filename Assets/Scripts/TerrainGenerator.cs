@@ -8,8 +8,10 @@ public class TerrainGenerator : MonoBehaviour {
     private float[,] noiseMap;
     private Color[] colorMap;
 
-    private const int MAX_X = 1000;
-    private const int MAX_Z = 1000;
+    private const int chunkSize = 121;
+
+    //private const int MAX_X = 1000;
+    //private const int MAX_Z = 1000;
 
     private TerrainDisplay terrainDisplay;
     private NoiseDisplay noiseDisplay;
@@ -19,11 +21,11 @@ public class TerrainGenerator : MonoBehaviour {
 
     public Vector3 offset = new Vector3(0, 0, 0);
 
-    [Range(1, MAX_X)]
-    public int xSize = 20;
+    //[Range(1, MAX_X)]
+    //public int chunkSize = 20;
 
-    [Range(1, MAX_Z)]
-    public int zSize = 20;
+    //[Range(1, MAX_Z)]
+    //public int chunkSize = 20;
 
     [Range(.0001f, 50f)]
     public float scale = 1f;
@@ -44,6 +46,11 @@ public class TerrainGenerator : MonoBehaviour {
     public float heightMultiplier = 1f;
 
     public TerrainType[] terrainTypes;
+
+    public AnimationCurve meshHeightCurve;
+
+    [Range(0, 6)]
+    public int levelOfDetail = 0;
 
     private void Awake()
     {
@@ -79,26 +86,26 @@ public class TerrainGenerator : MonoBehaviour {
 
     public void GenerateMap()
     {
-        noiseMap = Noise.GenerateNoiseMap(seed, offset, xSize, zSize, scale, frequency, octaves, persistance, lacunarity);
+        noiseMap = Noise.GenerateNoiseMap(seed, offset, chunkSize, chunkSize, scale, frequency, octaves, persistance, lacunarity);
 
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(noiseMap, heightMultiplier, 0);
-        colorMap = new Color[xSize * zSize];
-        for (int z = 0; z < zSize; z++)
+        MeshData meshData = MeshGenerator.GenerateTerrainMesh(noiseMap, heightMultiplier, meshHeightCurve, levelOfDetail, 0);
+        colorMap = new Color[chunkSize * chunkSize];
+        for (int z = 0; z < chunkSize; z++)
         {
-            for (int x = 0; x < xSize; x++)
+            for (int x = 0; x < chunkSize; x++)
             {
                 float currentHeight = noiseMap[x, z];
                 for (int i = 0; i < terrainTypes.Length; i++)
                 {
                     if (currentHeight <= terrainTypes[i].height)
                     {
-                        colorMap[z * xSize + x] = terrainTypes[i].color;
+                        colorMap[z * chunkSize + x] = terrainTypes[i].color;
                         break;
                     }
                 }
             }
         }
-        Texture2D meshTexture = TextureGenerator.TextureFromColorMap(colorMap, xSize, zSize);
+        Texture2D meshTexture = TextureGenerator.TextureFromColorMap(colorMap, chunkSize, chunkSize);
         terrainDisplay.DrawMesh(meshData, meshTexture);
     }
 
@@ -189,8 +196,8 @@ public class TerrainGenerator : MonoBehaviour {
 
     public void DisplayTerrain2D(Color[] colorMap)
     {
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(noiseMap, 0, 0);
-        Texture2D texture = TextureGenerator.TextureFromColorMap(colorMap, xSize, zSize);
+        MeshData meshData = MeshGenerator.GenerateFlatMesh(noiseMap, 0);
+        Texture2D texture = TextureGenerator.TextureFromColorMap(colorMap, chunkSize, chunkSize);
         terrainDisplay2D.DrawTerrain2D(meshData, texture);
     }
 
